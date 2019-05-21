@@ -106,3 +106,101 @@ kubeadm token create
 * https://stackoverflow.com/questions/48983354/kubernetes-list-all-pods-and-its-nodes?rq=1
 * https://kubernetes.io/docs/concepts/
 * https://github.com/kubernetes/kubeadm/issues/659
+
+## Course notes
+
+`kubectl` - a CLI tool for managing kubernetes clusters.
+In order to use `kubectl` locally, we need first to start the cluster, by typing:
+
+~~~
+minikube start
+~~~
+
+Then
+
+~~~
+kubectl apply -f ./deployment.yaml
+kubectl expose deployment tomcat-deployment --type=NodePort
+minikube service tomcat-deployment --url
+curl <URL>
+~~~
+
+`kubectl get pods` - get all info about the containers running
+`kubectl describe pod <pod_name>` - get detail info about the pod
+`kubectl port-forward <pod_name> [local_port]:[remote_port]` - map a remote port of the remote pod onto the local port of the local machine, useful
+`kubectl attach <pod_name> -c <container>`
+`kubectl exec [-it] <pod_name> [-c CONTAINER] -- COMMAND [args...]` - exec a command inside the container, same as `docker exec`
+    example:
+    `kubectl exec -it tomcat-deployment-56ff5c79c5-z9nxw bash`
+`kubectl run hazelcast --image=hazelcast --port=5701` - run an image on the cluster without writing any `deployment.yrml`
+`kubectl scale --replicas=4 deployment/tomcat-deployment` - scale the deployment without stopping it
+`kubectl get deployments` - list deployments
+`kubectl expose deployment tomcat-deployment --type=NodePort` - exposes the deployment by exposing one or several node ports
+`kubectl describe services` - get info about the deployments
+`kubectl expose deployment tomcat-deployment --type=LoadBalancer --port=8080 --target-port=8080 --name tomcat-load-balancer` - exposes the deployment through the load balancer
+
+`Kubernetes node` is a VM or a physical machine which runs pods.
+`kubelet` manages pods within a node.
+`kube-proxy` makes sure that the networking defined in the deployment works as required.
+`kube-dns` manages DNS system internally and automatically
+
+Kubernetes supports node replication and scaling on the same or multiple nodes.
+`Stateful` application keep session, `stateless` - don't.
+
+Kubernetes, apparently, has a load balance support out of the box.
+
+We can use labels to mark nodes, like this:
+`kubectl label node minikube storageType=ssd`
+And then we can use `nodeSelector` to deploy pods only on the matched nodes.
+
+Healthcheck probes can be either "readiness" or "liveness".
+
+`Namespaces` allow to separate the cluster onto smaller logical clusters.
+
+`Volumes`
+
+`kubectl get persistentvolume` - list volumes on a cluster
+
+`kubectl delete deployment <deployment_name>` - to stop all pods in the deployment, but other things like `persistentvolumes` will go on.
+In order to completely remove stuff we can run
+`kubectl delete -f ./wordpress-deployment.yaml` - `kubectl` will look into the file and remove all the listed resources
+
+`Secrets` can be either files in a `volume` (i.e. private keys) or environment variables.
+Secrets provide separation of the data, but does not provide encryption (they are base64-encoded)
+
+`kubectl create secret generic db-user-pass --from-file=./username.txt --from-file=./password.txt`
+`kubectl create secret mysql-pass --from-literal=password=YOUR_PASSWORD`
+`kubectl get secret`
+
+Monitoring
+
+Heapster - the container monitor / InfluxDB / Grafana
+
+Namespaces - allow to create virtual clusters on the same physical cluster, they provide separation. By default, the 'default' namespace is used.
+Probably it makes sense to use namespaces when you need to run several projects on one cluster. Different namespaces can have different resource restrictions.
+
+`kubectl create namespace <namespace-name>`
+`kubectl get namespace`
+
+Example:
+~~~
+kubectl create namespace cpu-limited-tomcat; # create a namespace
+kubectl create -f ./cpu-limits.yaml --namespace=cpu-limited-tomcat; # provide the quota for the namespace
+kubectl create -f ./tomcat-deployment.yaml --namespace=cpu-limited-tomcat;
+kubectl describe deployment tomcat-deployment —namespace=cpu-limited-tomcat;
+~~~
+
+Minikube notes:
+
+`minikube service wordpress --url`
+`minikube start`
+`minikube stop`
+
+Kubernetes can do horizontal autoscaling out of the box with the Horizontal Pod Autoscaler.
+
+`kubectl autoscale deployment wordpress --cpu-percent=50 --min=1 --max=5`
+
+## Copy credentials
+
+`vagrant ssh-config;`
+`scp -P 2202 -i /Users/sergei/proj/k8s/master/.vagrant/machines/default/virtualbox/private_key -r vagrant@localhost:/home/vagrant/.kube .`
