@@ -199,7 +199,14 @@ Kubernetes can do horizontal autoscaling out of the box with the Horizontal Pod 
 
 `kubectl autoscale deployment wordpress --cpu-percent=50 --min=1 --max=5`
 
-## Copy credentials
+## kubectl to remote cluster
 
 `vagrant ssh-config;`
 `scp -P 2202 -i /Users/sergei/proj/k8s/master/.vagrant/machines/default/virtualbox/private_key -r vagrant@localhost:/home/vagrant/.kube .`
+
+https://stackoverflow.com/questions/46360361/invalid-x509-certificate-for-kubernetes-master
+
+`sudo kubeadm reset`
+
+virtualbox__intnet: true
+

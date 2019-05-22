@@ -77,13 +77,13 @@ EOF
     sudo systemctl enable kubelet
 
     # initialize the cluster
-    sudo kubeadm init --apiserver-advertise-address=10.0.15.10 --pod-network-cidr=10.244.0.0/16 --apiserver-cert-extra-sans=localhost
+    sudo kubeadm init --apiserver-advertise-address=10.0.15.10 --pod-network-cidr=10.244.0.0/16 --apiserver-cert-extra-sans=localhost,127.0.0.1
     mkdir -p $HOME/.kube
     sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
     sudo chown $(id -u):$(id -g) $HOME/.kube/config
     kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 
-    kubeadm token create --print-join-command >> /tmp/kubeadm_join_cmd.sh
+    kubeadm token create --print-join-command > /tmp/kubeadm_join_cmd.sh
     chmod +x /tmp/kubeadm_join_cmd.sh
 
     # ssh with password
