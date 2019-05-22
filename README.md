@@ -59,8 +59,7 @@ sudo systemctl enable kubelet
 
 ### master
 ~~~
-sudo kubeadm init --apiserver-advertise-address=10.0.15.10 --pod-network-cidr=10.244.0.0/16
-# copy the "kubeadm join" command
+sudo kubeadm init --apiserver-advertise-address=10.0.15.10 --pod-network-cidr=10.244.0.0/16 --apiserver-cert-extra-sans=localhost
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config

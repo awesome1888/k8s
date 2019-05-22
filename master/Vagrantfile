@@ -21,8 +21,10 @@ Vagrant.configure("2") do |config|
 
   config.vm.provision "shell", privileged: false, inline: <<-SHELL
 
+    sudo yum install -y sshpass
+
     # prepare
-    printf "\n10.0.15.10 k8s-master\n10.0.15.10 master\n10.0.15.21 node01\n10.0.15.22 node02\n" | sudo tee -a /etc/hosts
+    printf "\n10.0.15.10 master\n10.0.15.21 node01\n10.0.15.22 node02\n" | sudo tee -a /etc/hosts
     sudo setenforce 0
     sudo sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
     sudo modprobe br_netfilter
@@ -74,6 +76,19 @@ EOF
     sudo systemctl start kubelet
     sudo systemctl enable kubelet
 
+    # initialize the cluster
+    sudo kubeadm init --apiserver-advertise-address=10.0.15.10 --pod-network-cidr=10.244.0.0/16 --apiserver-cert-extra-sans=localhost
+    mkdir -p $HOME/.kube
+    sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+    sudo chown $(id -u):$(id -g) $HOME/.kube/config
+    kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 
+    kubeadm token create --print-join-command >> /tmp/kubeadm_join_cmd.sh
+    chmod +x /tmp/kubeadm_join_cmd.sh
+
+    # ssh with password
+    # todo: this replacement somehow does not work :(
+    sudo sed -i -e 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config;
+    sudo service sshd restart
   SHELL
 end

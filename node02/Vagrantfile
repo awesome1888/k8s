@@ -21,8 +21,10 @@ Vagrant.configure("2") do |config|
 
   config.vm.provision "shell", privileged: false, inline: <<-SHELL
 
+    sudo yum install -y sshpass
+
     # prepare
-    printf "\n10.0.15.10 k8s-master\n10.0.15.10 master\n10.0.15.21 node01\n10.0.15.22 node02\n" | sudo tee -a /etc/hosts
+    printf "\n10.0.15.10 master\n10.0.15.21 node01\n10.0.15.22 node02\n" | sudo tee -a /etc/hosts
     sudo setenforce 0
     sudo sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
     sudo modprobe br_netfilter
@@ -73,5 +75,8 @@ EOF
     sudo systemctl enable docker
     sudo systemctl start kubelet
     sudo systemctl enable kubelet
+
+    # join the cluster
+    sshpass -p "vagrant" scp -o StrictHostKeyChecking=no vagrant@10.0.15.10:/tmp/kubeadm_join_cmd.sh .
   SHELL
 end
