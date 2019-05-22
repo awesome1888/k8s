@@ -78,5 +78,6 @@ EOF
 
     # join the cluster
     sshpass -p "vagrant" scp -o StrictHostKeyChecking=no vagrant@10.0.15.10:/tmp/kubeadm_join_cmd.sh .
+    sudo ./kubeadm_join_cmd.sh
   SHELL
 end
