@@ -28,11 +28,12 @@ Vagrant.configure("2") do |config|
     sudo modprobe br_netfilter
     echo "br_netfilter" | sudo tee -a /etc/modules-load.d/br_netfilter.conf
 
-    # todo:
-    # the next command does not survive system restart
     echo '1' | sudo tee -a /proc/sys/net/bridge/bridge-nf-call-iptables
+    printf "\nnet.bridge.bridge-nf-call-iptables = 1\n" | sudo tee -a /etc/sysctl.conf
+    sudo sysctl -p
 
     sudo swapoff -a
+    sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
 
     # install Docker
     sudo yum install -y yum-utils device-mapper-persistent-data lvm2
@@ -72,5 +73,7 @@ EOF
     sudo systemctl enable docker
     sudo systemctl start kubelet
     sudo systemctl enable kubelet
+
+
   SHELL
 end
