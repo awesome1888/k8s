@@ -201,12 +201,18 @@ Kubernetes can do horizontal autoscaling out of the box with the Horizontal Pod 
 
 ## kubectl to remote cluster
 
-`vagrant ssh-config;`
-`scp -P 2202 -i /Users/sergei/proj/k8s/master/.vagrant/machines/default/virtualbox/private_key -r vagrant@localhost:/home/vagrant/.kube .`
+Check if we can ping all nodes!
+
+~~~~
+scp -r vagrant@10.0.15.10:/home/vagrant/.kube .; # this works because the network is not internal and we enabled password authentication
+cp -r .kube $HOME/;
+# scp -i /Users/sergei/proj/k8s/master/.vagrant/machines/default/virtualbox/private_key -r vagrant@10.0.15.10:/home/vagrant/.kube .
+~~~~
 
 https://stackoverflow.com/questions/46360361/invalid-x509-certificate-for-kubernetes-master
 
-`sudo kubeadm reset`
+`sudo kubeadm reset;`
+`vagrant ssh-config;`
 
 virtualbox__intnet: true
 
