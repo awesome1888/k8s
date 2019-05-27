@@ -135,7 +135,7 @@ curl <URL>
 `kubectl scale --replicas=4 deployment/tomcat-deployment` - scale the deployment without stopping it
 `kubectl get deployments` - list deployments
 `kubectl expose deployment tomcat-deployment --type=NodePort` - exposes the deployment by exposing one or several node ports
-`kubectl describe services` - get info about the deployments
+`kubectl describe services` - get info about the services
 `kubectl expose deployment tomcat-deployment --type=LoadBalancer --port=8080 --target-port=8080 --name tomcat-load-balancer` - exposes the deployment through the load balancer
 
 `Kubernetes node` is a VM or a physical machine which runs pods.
@@ -146,7 +146,8 @@ curl <URL>
 Kubernetes supports node replication and scaling on the same or multiple nodes.
 `Stateful` application keep session, `stateless` - don't.
 
-Kubernetes, apparently, has a load balance support out of the box.
+Pod can run one or many containers.
+A service is something that exposes a container to the outer world. A service can be created as load balancer.
 
 We can use labels to mark nodes, like this:
 `kubectl label node minikube storageType=ssd`
@@ -187,6 +188,22 @@ kubectl create namespace cpu-limited-tomcat; # create a namespace
 kubectl create -f ./cpu-limits.yaml --namespace=cpu-limited-tomcat; # provide the quota for the namespace
 kubectl create -f ./tomcat-deployment.yaml --namespace=cpu-limited-tomcat;
 kubectl describe deployment tomcat-deployment —namespace=cpu-limited-tomcat;
+~~~
+
+Auditing - some kind of logs
+
+Helm vs Terraform
+Helm trunes yaml files into templates.
+When use service providers: Terraform or Helm
+When using baremetal: Helm
+
+~~~
+helm create; # build and name a new chart
+helm fetch; # download and unpack a chart into a folder
+helm rollback; # rollback a release to a previous version
+helm status; # show the status of a release
+helm upgrade; # upgrade a release
+helm history;
 ~~~
 
 Minikube notes:
