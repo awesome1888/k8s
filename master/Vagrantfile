@@ -21,29 +21,33 @@ Vagrant.configure("2") do |config|
 
   config.vm.provision "shell", privileged: false, inline: <<-SHELL
 
-    sudo yum install -y sshpass
+    UID=vagrant
+    GID=vagrant
+    HOME=/home/vagrant
+
+    sudo yum install -y sshpass;
 
     # prepare
-    printf "\n10.0.15.10 master\n10.0.15.21 node01\n10.0.15.22 node02\n" | sudo tee -a /etc/hosts
-    sudo setenforce 0
-    sudo sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux
-    sudo modprobe br_netfilter
-    echo "br_netfilter" | sudo tee -a /etc/modules-load.d/br_netfilter.conf
+    printf "\n10.0.15.10 master\n10.0.15.21 node01\n10.0.15.22 node02\n" | sudo tee -a /etc/hosts;
+    sudo setenforce 0;
+    sudo sed -i --follow-symlinks 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/sysconfig/selinux;
+    sudo modprobe br_netfilter;
+    echo "br_netfilter" | sudo tee -a /etc/modules-load.d/br_netfilter.conf;
 
-    echo '1' | sudo tee -a /proc/sys/net/bridge/bridge-nf-call-iptables
-    printf "\nnet.bridge.bridge-nf-call-iptables = 1\n" | sudo tee -a /etc/sysctl.conf
-    sudo sysctl -p
+    echo '1' | sudo tee -a /proc/sys/net/bridge/bridge-nf-call-iptables;
+    printf "\nnet.bridge.bridge-nf-call-iptables = 1\n" | sudo tee -a /etc/sysctl.conf;
+    sudo sysctl -p;
 
-    sudo swapoff -a
-    sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+    sudo swapoff -a;
+    sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab;
 
     # install Docker
-    sudo yum install -y yum-utils device-mapper-persistent-data lvm2
-    sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-    sudo yum install -y docker-ce
+    sudo yum install -y yum-utils device-mapper-persistent-data lvm2;
+    sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo;
+    sudo yum install -y docker-ce;
 
-    sudo mkdir /etc/docker
-sudo tee /etc/docker/daemon.json > /dev/null <<'EOF'
+    sudo mkdir /etc/docker;
+    sudo tee /etc/docker/daemon.json > /dev/null <<'EOF';
 {
   "exec-opts": ["native.cgroupdriver=systemd"],
   "log-driver": "json-file",
@@ -55,10 +59,10 @@ sudo tee /etc/docker/daemon.json > /dev/null <<'EOF'
     "overlay2.override_kernel_check=true"
   ]
 }
-EOF
+EOF;
 
     # install kubernetes
-sudo tee /etc/yum.repos.d/kubernetes.repo > /dev/null <<'EOF'
+    sudo tee /etc/yum.repos.d/kubernetes.repo > /dev/null <<'EOF'
 [kubernetes]
 name=Kubernetes
 baseurl=https://packages.cloud.google.com/yum/repos/kubernetes-el7-x86_64
@@ -67,28 +71,31 @@ gpgcheck=1
 repo_gpgcheck=1
 gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
         https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
-EOF
-    sudo yum install -y kubelet kubeadm kubectl
+EOF;
+    sudo yum install -y kubelet kubeadm kubectl;
 
     # start all
-    sudo systemctl start docker
-    sudo systemctl enable docker
-    sudo systemctl start kubelet
-    sudo systemctl enable kubelet
+    sudo systemctl start docker;
+    sudo systemctl enable docker;
+    sudo systemctl start kubelet;
+    sudo systemctl enable kubelet;
 
     # initialize the cluster
-    sudo kubeadm init --apiserver-advertise-address=10.0.15.10 --pod-network-cidr=10.244.0.0/16 --apiserver-cert-extra-sans=localhost,127.0.0.1
-    mkdir -p $HOME/.kube
-    sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-    sudo chown $(id -u):$(id -g) $HOME/.kube/config
-    kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+    sudo kubeadm init --apiserver-advertise-address=10.0.15.10 --pod-network-cidr=10.244.0.0/16 --apiserver-cert-extra-sans=localhost,127.0.0.1;
+    mkdir -p ${HOME}/.kube;
+    sudo cp -i /etc/kubernetes/admin.conf ${HOME}/.kube/config;
+    sudo chown ${UID}:${$GID} ${HOME}/.kube/config;
+    kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml;
 
-    kubeadm token create --print-join-command > /tmp/kubeadm_join_cmd.sh
-    chmod +x /tmp/kubeadm_join_cmd.sh
+    kubeadm token create --print-join-command > /tmp/kubeadm_join_cmd.sh;
+    chmod +x /tmp/kubeadm_join_cmd.sh;
 
     # ssh with password
-    # todo: this replacement somehow does not work :(
     sudo sed -i -e 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config;
-    sudo service sshd restart
+    sudo service sshd restart;
+
+    # enable running docker cli without sudo (for development only):
+    sudo usermod -aG docker ${UID};
+
   SHELL
 end
