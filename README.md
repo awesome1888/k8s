@@ -220,6 +220,8 @@ Kubernetes can do horizontal autoscaling out of the box with the Horizontal Pod 
 
 Check if we can ping all nodes!
 
+How to access the remote cluster locally:
+
 ~~~~
 scp -r vagrant@10.0.15.10:/home/vagrant/.kube .; # this works because the network is not internal and we enabled password authentication
 cp -r .kube $HOME/;

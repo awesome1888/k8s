@@ -87,15 +87,20 @@ EOF;
     sudo chown ${UID}:${$GID} ${HOME}/.kube/config;
     kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml;
 
-    kubeadm token create --print-join-command > /tmp/kubeadm_join_cmd.sh;
-    chmod +x /tmp/kubeadm_join_cmd.sh;
+    ###############################################################
+    ### The following block is for the development cluster only
 
     # ssh with password
     sudo sed -i -e 's/PasswordAuthentication no/PasswordAuthentication yes/g' /etc/ssh/sshd_config;
+    sudo usermod --password $(echo 123 | openssl passwd -1 -stdin) vagrant;
     sudo service sshd restart;
 
     # enable running docker cli without sudo (for development only):
     sudo usermod -aG docker ${UID};
+
+    # generate access token
+    kubeadm token create --print-join-command > /tmp/kubeadm_join_cmd.sh;
+    chmod +x /tmp/kubeadm_join_cmd.sh;
 
   SHELL
 end
