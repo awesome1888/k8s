@@ -85,7 +85,14 @@ EOF;
     mkdir -p ${HOME}/.kube;
     sudo cp -i /etc/kubernetes/admin.conf ${HOME}/.kube/config;
     sudo chown ${UID}:${$GID} ${HOME}/.kube/config;
+
+    # flannel network
     kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml;
+
+    # nginx ingress
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/mandatory.yaml;
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/baremetal/service-nodeport.yaml;
+    kubectl get pods --all-namespaces -l app.kubernetes.io/name=ingress-nginx;
 
     ###############################################################
     ### The following block is for the development cluster only

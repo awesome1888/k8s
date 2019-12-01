@@ -235,3 +235,7 @@ https://stackoverflow.com/questions/46360361/invalid-x509-certificate-for-kubern
 
 virtualbox__intnet: true
 
+
+* 10.0.15.10 - master
+* 10.0.15.21 - node01
+* 10.0.15.22 - node02
