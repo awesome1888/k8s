@@ -161,6 +161,7 @@ spec:
 EOF
     kubectl apply -f /tmp/grafana-ingress.yml;
     rm /tmp/grafana-ingress.yml;
+    # the default credentials are admin:prom-operator
 
     ###############################################################
     ### The following block is for the development cluster only
