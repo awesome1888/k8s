@@ -7,7 +7,7 @@ Vagrant.configure("2") do |config|
 
   # special
   config.vm.network "private_network", ip: "10.0.15.10"
-  # config.vm.network "forwarded_port", guest: 6443, host: 6443, host_ip: "127.0.0.1"
+  config.vm.network "forwarded_port", guest: 9090, host: 9090, host_ip: "127.0.0.1"
 
   config.vm.provider "virtualbox" do |vb|
     vb.gui = false
@@ -25,7 +25,7 @@ Vagrant.configure("2") do |config|
     GID=vagrant
     HOME=/home/vagrant
 
-    sudo yum install -y sshpass;
+    sudo yum install -y sshpass wget curl;
 
     # prepare
     printf "\n10.0.15.10 master\n10.0.15.21 node01\n10.0.15.22 node02\n" | sudo tee -a /etc/hosts;
@@ -35,8 +35,12 @@ Vagrant.configure("2") do |config|
     echo "br_netfilter" | sudo tee -a /etc/modules-load.d/br_netfilter.conf;
 
     echo '1' | sudo tee -a /proc/sys/net/bridge/bridge-nf-call-iptables;
-    printf "\nnet.bridge.bridge-nf-call-iptables = 1\n" | sudo tee -a /etc/sysctl.conf;
+    printf "\nnet.bridge.bridge-nf-call-iptables = 1\nnet.ipv4.ip_forward=1\n" | sudo tee -a /etc/sysctl.conf;
     sudo sysctl -p;
+
+    sudo systemctl stop firewalld;
+    sudo systemctl disable firewalld;
+    sudo systemctl mask --now firewalld;
 
     sudo swapoff -a;
     sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab;
@@ -113,6 +117,15 @@ EOF
     kubectl get pods --all-namespaces -l app.kubernetes.io/name=ingress-nginx;
 
     ###############################################################
+    ### Helm
+
+    curl -L https://git.io/get_helm.sh | bash
+    kubectl -n kube-system create serviceaccount tiller
+    kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
+    helm init --service-account tiller
+    # kubectl port-forward -n monitoring prometheus-prometheus-operator-prometheus-0 9090 --address 0.0.0.0
+
+    ###############################################################
     ### The following block is for the development cluster only
 
     # ssh with password
@@ -126,6 +139,17 @@ EOF
     # generate access token
     kubeadm token create --print-join-command > /tmp/kubeadm_join_cmd.sh;
     chmod +x /tmp/kubeadm_join_cmd.sh;
+
+    ###############################################################
+    ### This might be helpful on production
+    # sudo firewall-cmd --zone=public --add-port=6443/tcp --permanent
+    # sudo firewall-cmd --zone=public --add-port=10250/tcp --permanent
+    ### also this
+    # sudo iptables -P FORWARD ACCEPT
+    ### or this :) Mambo-Jambo
+    # sudo  /sbin/iptables -I FORWARD 1 -i cni0 -j ACCEPT -m comment --comment "flannel subnet"
+    # sudo  /sbin/iptables -I FORWARD 1 -o cni0 -j ACCEPT -m comment --comment "flannel subnet"
+    # sudo /sbin/iptables -t nat -A POSTROUTING -s 10.244.0.0/16 ! -d 10.244.0.0/16 -j MASQUERADE
 
   SHELL
 end

@@ -239,3 +239,68 @@ virtualbox__intnet: true
 * 10.0.15.10 - master
 * 10.0.15.21 - node01
 * 10.0.15.22 - node02
+
+
+## More of notes
+
+<div>Icons made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
+
+
+kubectl expose deployment/kubernetes-bootcamp --type="NodePort" --port 8080
+
+
+
+195.140.146.219  master
+195.140.147.21  node01
+
+kubeadm init --apiserver-advertise-address=195.140.146.219 --pod-network-cidr=10.244.0.0/16 --apiserver-cert-extra-sans=localhost,127.0.0.1;
+
+kubeadm join 195.140.146.219:6443 --token llaobt.qj0y2bowml35h1hn     --discovery-token-ca-cert-hash sha256:149355d2c48ab58caa9e8dfcd9dfb34ad681fc5d91525acc04f4c77d3c7f7014
+kubeadm join 192.168.0.3:6443 --token llaobt.qj0y2bowml35h1hn     --discovery-token-ca-cert-hash sha256:149355d2c48ab58caa9e8dfcd9dfb34ad681fc5d91525acc04f4c77d3c7f7014
+
+  [WARNING Firewalld]: firewalld is active, please ensure ports [6443 10250] are open or your cluster may not function correctly
+  [WARNING SystemVerification]: this Docker version is not on the list of validated versions: 19.03.5. Latest validated version: 18.09
+
+
+      tee /tmp/metallb-conf.yml > /dev/null <<'EOF'
+apiVersion: v1
+kind: ConfigMap
+metadata:
+    namespace: metallb-system
+    name: config
+data:
+    config: |
+        address-pools:
+        - name: default
+          protocol: layer2
+          addresses:
+          - 195.140.147.21
+EOF
+
+
+
+adduser bot;
+gpasswd -a bot wheel;
+gpasswd -a bot docker;
+
+
+ssh-keygen -t rsa -b 4096;
+
+
+sudo iptables -A INPUT -p tcp --dport 6443 -s 195.140.147.21 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+sudo iptables -A INPUT -p tcp --dport 10250 -s 195.140.147.21 -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+
+kubectl logs -n ingress-nginx --tail=5 nginx-ingress-controller-568867bf56-fkg54
+kubectl logs -n metallb-system --tail=5 controller-65895b47d4-qlhd7
+kubectl -n metallb-system describe pod controller-65895b47d4-qlhd7
+
+kubectl -n k8s-proj-prod get ingress
+
+wget https://195.140.147.21:10250/containerLogs/ingress-nginx/nginx-ingress-controller-568867bf56-fkg54/nginx-ingress-controller --no-check-certificate
+
+
+docker exec -u root feef175d2a3895d6097cc2ee455355826c8f19a1471a7ef13ccf1452311b588c -- /bin/bash
+
+
+https://github.com/danderson/metallb/issues/327
+
