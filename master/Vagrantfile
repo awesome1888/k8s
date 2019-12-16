@@ -7,7 +7,7 @@ Vagrant.configure("2") do |config|
 
   # special
   config.vm.network "private_network", ip: "10.0.15.10"
-  config.vm.network "forwarded_port", guest: 9090, host: 9090, host_ip: "127.0.0.1"
+  # config.vm.network "forwarded_port", guest: 9090, host: 9090, host_ip: "127.0.0.1"
 
   config.vm.provider "virtualbox" do |vb|
     vb.gui = false
@@ -111,6 +111,7 @@ data:
           - 10.0.15.21-10.0.15.22
 EOF
     kubectl apply -f /tmp/metallb-conf.yml;
+    rm /tmp/metallb-conf.yml;
 
     kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/mandatory.yaml;
     kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/master/deploy/static/provider/cloud-generic.yaml;
@@ -122,8 +123,44 @@ EOF
     curl -L https://git.io/get_helm.sh | bash
     kubectl -n kube-system create serviceaccount tiller
     kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
-    helm init --service-account tiller
+    helm init --client-only
+
+    # (see: https://v2.helm.sh/docs/using_helm/#securing-your-helm-installation on how to run tiller locally)
+    # first terminal:
+    # tiller --storage=secret
+    # second terminal:
+    # export HELM_HOST=:44134
+
     # kubectl port-forward -n monitoring prometheus-prometheus-operator-prometheus-0 9090 --address 0.0.0.0
+    # kubectl port-forward $(kubectl get pods --selector=app=grafana -n monitoring --output=jsonpath="{.items..metadata.name}") -n monitoring 3000 --address 0.0.0.0
+
+    # additional stuff
+    # helm reset --force
+    # helm init --service-account tiller --tiller-tls-verify
+
+    ###############################################################
+    ### Prometheus
+    helm install stable/prometheus-operator --name prometheus-operator --namespace monitoring
+    # kubectl --namespace monitoring get pods -l "release=prometheus-operator"
+
+    # expose Grafana
+    tee /tmp/grafana-ingress.yml > /dev/null <<'EOF'
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: monitoring
+  namespace: monitoring
+spec:
+  rules:
+  - host: your-domain.com
+    http:
+      paths:
+      - backend:
+          serviceName: prometheus-operator-grafana
+          servicePort: 80
+EOF
+    kubectl apply -f /tmp/grafana-ingress.yml;
+    rm /tmp/grafana-ingress.yml;
 
     ###############################################################
     ### The following block is for the development cluster only
